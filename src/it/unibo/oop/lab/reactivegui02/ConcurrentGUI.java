@@ -18,6 +18,7 @@ public class ConcurrentGUI extends JFrame {
     private final JButton up = new JButton("Up");
     private final JButton down = new JButton("Down");
     private final JButton stop = new JButton("Stop");
+    private final Agent agent = new Agent();
 
     /**
      * 
@@ -39,7 +40,6 @@ public class ConcurrentGUI extends JFrame {
         panel.add(this.stop);
         this.getContentPane().add(panel);
         this.setVisible(true);
-        final Agent agent = new Agent();
         new Thread(agent).start();
         stop.addActionListener(e -> {
             agent.stopTheCount();
@@ -47,25 +47,22 @@ public class ConcurrentGUI extends JFrame {
             this.down.setEnabled(false);
             this.stop.setEnabled(false);
             });
-        up.addActionListener(e -> {
-            this.display.setText(Integer.toString(agent.count++));
-        });
-        down.addActionListener(e -> {
-            this.display.setText(Integer.toString(agent.count--));
-        });
+        up.addActionListener(e -> agent.up());
+        down.addActionListener(e -> agent.down());
         }
 
         private class Agent implements Runnable {
 
             private volatile boolean stop;
-            private volatile int count;
+            private volatile boolean up = true;
+            private int count;
             @Override
             public void run() {
                 while (!stop) {
                     try {
-                        SwingUtilities.invokeAndWait(() -> ConcurrentGUI.this.display.setText(
-                                Integer.toString(Agent.this.count)));
-                        this.count++;
+                        SwingUtilities.invokeAndWait(() -> display.setText(
+                                Integer.toString(this.count)));
+                        this.count += up ? 1 : -1;
                         Thread.sleep(100);
                     } catch (InterruptedException | InvocationTargetException e) {
                         e.printStackTrace();
@@ -74,6 +71,14 @@ public class ConcurrentGUI extends JFrame {
             }
             public void stopTheCount() {
                 this.stop = true;
+            }
+
+            public void up() {
+                this.up = true;
+            }
+
+            public void down() {
+                this.up = false;
             }
 
         }
